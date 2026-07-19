@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Groundnut Quantum Irrigation Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #f4f6f8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    h2 {
+      color: #00796b;
+      margin-bottom: 25px;
+      font-size: 2em;
+    }
+    .card {
+      background: #ffffff;
+      width: 860px;
+      max-width: 98%;
+      margin: 10px auto;
+      padding: 30px 35px;
+      border-radius: 20px;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .row {
+      margin: 12px 0;
+      color: #333;
+      font-size: 1.05em;
+    }
+    .row b { color: #00796b; }
+    .divider {
+      border: 0;
+      border-top: 1px solid #eee;
+      margin: 18px 0;
+    }
+    .moisture-bar {
+      background: #e0e0e0;
+      border-radius: 15px;
+      height: 25px;
+      width: 100%;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .moisture-fill {
+      background: #43a047;
+      height: 100%;
+      width: 0;
+      border-radius: 15px 0 0 15px;
+      transition: width 0.8s ease;
+    }
+    .pump-indicator {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-left: 10px;
+      vertical-align: middle;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.95em;
+      margin-left: 10px;
+      color: white;
+    }
+    .healthy { background: #43a047; }
+    .warn { background: #f9a825; color: #1b1b1b; }
+    .danger { background: #e53935; }
+    .neutral { background: #607d8b; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.85em;
+      margin-left: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .low { background: #ffebee; color: #c62828; }
+    .optimal { background: #e8f5e9; color: #2e7d32; }
+    .high { background: #fff8e1; color: #f57f17; }
+    .section-title {
+      margin-top: 18px;
+      margin-bottom: 10px;
+      color: #00796b;
+      font-weight: 900;
+      font-size: 1.05em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 14px 14px;
+      margin-top: 14px;
+    }
+    .head {
+      font-weight: 900;
+      color: #00695c;
+      font-size: 0.95em;
+      padding: 6px 0;
+    }
+    .sensor-name {
+      background: #f1f8e9;
+      border: 1px solid #dcedc8;
+      padding: 12px;
+      border-radius: 14px;
+      font-weight: 900;
+      color: #2e7d32;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+    }
+    .sensor-name small {
+      font-weight: 700;
+      opacity: 0.9;
+      color: #33691e;
+    }
+    .input-box {
+      background: #f9fbfc;
+      border: 1px solid #e5ecef;
+      border-radius: 14px;
+      padding: 10px;
+    }
+    label {
+      display: block;
+      font-size: 0.86em;
+      font-weight: 900;
+      color: #00796b;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid #cfd8dc;
+      font-size: 1em;
+      outline: none;
+      box-sizing: border-box;
+      background: white;
+    }
+    input:focus {
+      border-color: #0288d1;
+      box-shadow: 0 0 0 2px rgba(2,136,209,0.15);
+    }
+    .modebar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      margin: 12px 0 0;
+    }
+    select {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #cfd8dc;
+      font-weight: 900;
+      color: #00796b;
+      background: white;
+      cursor: pointer;
+      outline: none;
+    }
+    button {
+      padding: 13px 22px;
+      margin-top: 18px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 1.05em;
+      transition: all 0.3s ease;
+      width: 100%;
+      background-color: #0288d1;
+      color: white;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+    button:hover { background-color: #0277bd; }
+    button:disabled { cursor: not-allowed; opacity: 0.7; }
+    .loading {
+      display: none;
+      margin-top: 16px;
+      background: #0f172a;
+      color: #eaf2ff;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .loading.show { display: block; }
+    .loading-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top: 3px solid white;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { font-weight: 900; font-size: 1em; }
+    .progress {
+      height: 10px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #22c55e, #3b82f6);
+      transition: width 0.35s ease;
+    }
+    .advice-box {
+      background: #f6f8fa;
+      border: 1px solid #e2e8f0;
+      padding: 12px;
+      border-radius: 14px;
+      margin-top: 10px;
+    }
+    .advice-title {
+      font-weight: 900;
+      color: #00796b;
+      margin-bottom: 6px;
+    }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+    .hint {
+      font-size: 0.9em;
+      color: #455a64;
+      margin-top: 12px;
+      opacity: 0.9;
+    }
+    .sync-note {
+      margin-top: 8px;
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 0.95em;
+      color: #0d47a1;
+      font-weight: 800;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .head { display: none; }
+    }
+  </style>
+</head>
+<body>
+<h2>Groundnut Quantum Irrigation Dashboard</h2>
+<div class="card">
+  <div class="row">
+    <b>Soil Moisture (Normalized):</b> <span id="moisture">--</span>
+    <div class="moisture-bar">
+      <div class="moisture-fill" id="moisture-fill"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <b>Pump Status:</b> <span id="pump">--</span>
+    <span class="pump-indicator" id="pump-indicator"></span>
+  </div>
+
+  <div class="row">
+    <b>Plant Status:</b>
+    <span id="plant_status" class="status-pill neutral">--</span>
+  </div>
+
+  <div class="row">
+    <b>Nutrient Status:</b>
+    <span id="n_status">N: --</span>
+    <span id="p_status">P: --</span>
+    <span id="k_status">K: --</span>
+  </div>
+
+  <div class="row">
+    <b>Quantum Summary:</b> <span id="summary">--</span>
+  </div>
+
+  <div class="advice-box">
+    <div class="advice-title">Irrigation Advice</div>
+    <ul id="irrigation_list"><li>--</li></ul>
+  </div>
+
+  <div class="advice-box">
+    <div class="advice-title">Fertilizer Advice</div>
+    <ul id="fertilizer_list"><li>--</li></ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-title">Input Sensor Values (RAW units : Normalized 0–1)</div>
+
+  <div class="sync-note">
+    Auto-sync enabled: Type in RAW values - normalized updates automatically (and vice versa).
+  </div>
+
+  <div class="modebar">
+    <b style="color:#00796b;">Input Mode:</b>
+    <select id="mode">
+      <option value="AUTO" selected>AUTO (use whichever filled)</option>
+      <option value="RAW">RAW units only</option>
+      <option value="NORM">Normalized only (0–1)</option>
+    </select>
+  </div>
+  <div class="grid">
+    <div class="head">Sensor</div>
+    <div class="head">RAW Units</div>
+    <div class="head">Normalized (0–1)</div>
+    <div class="sensor-name">Soil Moisture <small>(%)</small></div>
+    <div class="input-box"><label>soil_moisture_raw</label><input id="soil_moisture_raw" type="number" step="0.1" value="30"></div>
+    <div class="input-box"><label>soil_moisture</label><input id="soil_moisture" type="number" min="0" max="1" step="0.01" value="0.30"></div>
+    <div class="sensor-name">Temperature <small>(°C)</small></div>
+    <div class="input-box"><label>temperature_raw</label><input id="temperature_raw" type="number" step="0.1" value="38"></div>
+    <div class="input-box"><label>temperature</label><input id="temperature" type="number" min="0" max="1" step="0.01" value="0.85"></div>
+    <div class="sensor-name">Humidity <small>(%RH)</small></div>
+    <div class="input-box"><label>humidity_raw</label><input id="humidity_raw" type="number" step="0.1" value="32"></div>
+    <div class="input-box"><label>humidity</label><input id="humidity" type="number" min="0" max="1" step="0.01" value="0.32"></div>
+    <div class="sensor-name">Light <small>(lux)</small></div>
+    <div class="input-box"><label>light_raw</label><input id="light_raw" type="number" step="1" value="72000"></div>
+    <div class="input-box"><label>light</label><input id="light" type="number" min="0" max="1" step="0.01" value="0.75"></div>
+    <div class="sensor-name">Nitrogen (N) <small>(mg/kg or ppm)</small></div>
+    <div class="input-box"><label>nitrogen_raw</label><input id="nitrogen_raw" type="number" step="1" value="50"></div>
+    <div class="input-box"><label>nitrogen</label><input id="nitrogen" type="number" min="0" max="1" step="0.01" value="0.25"></div>
+    <div class="sensor-name">Phosphorus (P) <small>(mg/kg or ppm)</small></div>
+    <div class="input-box"><label>phosphorus_raw</label><input id="phosphorus_raw" type="number" step="1" value="60"></div>
+    <div class="input-box"><label>phosphorus</label><input id="phosphorus" type="number" min="0" max="1" step="0.01" value="0.28"></div>
+    <div class="sensor-name">Potassium (K) <small>(mg/kg or ppm)</small></div>
+    <div class="input-box"><label>potassium_raw</label><input id="potassium_raw" type="number" step="1" value="80"></div>
+    <div class="input-box"><label>potassium</label><input id="potassium" type="number" min="0" max="1" step="0.01" value="0.30"></div>
+  </div>
+  <button id="analyzeBtn" onclick="analyze()">Analyze Quantum Model</button>
+  <div id="loadingPanel" class="loading">
+    <div class="loading-top">
+      <div class="spinner"></div>
+      <div class="loading-msg" id="loadingMsg">Preparing quantum circuit...</div>
+    </div>
+    <div class="progress">
+      <div id="progressFill"></div>
+    </div>
+  </div>
+  <p class="hint">
+    Backend endpoint: <code>POST http://127.0.0.1:5000/monitor</code>
+  </p>
+  <details>
+    <summary style="cursor:pointer;color:#0288d1;font-weight:900;">Show Raw Quantum Report (JSON)</summary>
+    <pre id="raw_json">{ }</pre>
+  </details>
+
+</div>
+
+<script>
+  const API = "http://127.0.0.1:5000";
+  const RAW_RANGES = {
+    soil_moisture: [0, 100],     
+    temperature: [20, 45],        
+    humidity: [0, 100],          
+    light: [0, 100000],          
+    nitrogen: [0, 200],         
+    phosphorus: [0, 200],         
+    potassium: [0, 200],          
+  };
+
+  function clamp01(x) {
+    if (isNaN(x)) return 0;
+    return Math.max(0, Math.min(1, x));
+  }
+
+  function normFromRaw(feature, rawValue) {
+    const [lo, hi] = RAW_RANGES[feature];
+    return clamp01((rawValue - lo) / (hi - lo));
+  }
+
+  function rawFromNorm(feature, normValue) {
+    const [lo, hi] = RAW_RANGES[feature];
+    return lo + clamp01(normValue) * (hi - lo);
+  }
+
+  function statusClass(label) {
+    if (label === "HEALTHY")              return "healthy";
+    if (label === "NEEDS_WATER")          return "danger";
+    if (label === "HEAT_STRESS")          return "warn";
+    if (label === "NUTRIENT_DEFICIENCY")  return "warn";
+    if (label === "WATERLOGGED")          return "danger";
+    if (label === "PEST_DAMAGE")          return "warn";
+    if (label === "FROST_STRESS")         return "neutral";
+    return "neutral";
+  }
+
+  function badgeHTML(letter, status) {
+    const s = String(status || "--").toUpperCase();
+    let cls = "optimal";
+    if (s === "LOW") cls = "low";
+    if (s === "HIGH") cls = "high";
+    if (s === "--") cls = "neutral";
+    return `${letter}: <span class="badge ${cls}">${s}</span>`;
+  }
+
+  function setList(elId, items) {
+    const ul = document.getElementById(elId);
+    ul.innerHTML = "";
+    if (!items || items.length === 0) {
+      ul.innerHTML = "<li>--</li>";
+      return;
+    }
+    items.forEach(x => {
+      const li = document.createElement("li");
+      li.textContent = x;
+      ul.appendChild(li);
+    });
+  }
+
+  function showLoading() {
+    document.getElementById("loadingPanel").classList.add("show");
+    document.getElementById("loadingMsg").innerText = "Preparing quantum circuit...";
+    document.getElementById("progressFill").style.width = "0%";
+  }
+
+  function setLoading(stage, pct) {
+    document.getElementById("loadingMsg").innerText = stage;
+    document.getElementById("progressFill").style.width = pct + "%";
+  }
+
+  function hideLoading() {
+    document.getElementById("loadingPanel").classList.remove("show");
+  }
+
+  let syncing = false;
+  function setupSync(feature) {
+    const rawEl = document.getElementById(feature + "_raw");
+    const normEl = document.getElementById(feature);
+    rawEl.addEventListener("input", () => {
+      if (syncing) return;
+      syncing = true;
+      const rawVal = parseFloat(rawEl.value);
+      if (!isNaN(rawVal)) {
+        normEl.value = normFromRaw(feature, rawVal).toFixed(2);
+      }
+      syncing = false;
+    });
+    normEl.addEventListener("input", () => {
+      if (syncing) return;
+      syncing = true;
+      const normVal = parseFloat(normEl.value);
+      if (!isNaN(normVal)) {
+        rawEl.value = rawFromNorm(feature, normVal).toFixed(feature === "light" ? 0 : 1);
+      }
+      syncing = false;
+    });
+  }
+  ["soil_moisture","temperature","humidity","light","nitrogen","phosphorus","potassium"]
+    .forEach(setupSync);
+
+  function getVal(id) {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? null : v;
+  }
+
+  async function analyze() {
+    const mode = document.getElementById("mode").value;
+    const payload = { mode };
+    payload.soil_moisture_raw = getVal("soil_moisture_raw");
+    payload.temperature_raw = getVal("temperature_raw");
+    payload.humidity_raw = getVal("humidity_raw");
+    payload.light_raw = getVal("light_raw");
+    payload.nitrogen_raw = getVal("nitrogen_raw");
+    payload.phosphorus_raw = getVal("phosphorus_raw");
+    payload.potassium_raw = getVal("potassium_raw");
+    payload.soil_moisture = clamp01(getVal("soil_moisture"));
+    payload.temperature = clamp01(getVal("temperature"));
+    payload.humidity = clamp01(getVal("humidity"));
+    payload.light = clamp01(getVal("light"));
+    payload.nitrogen = clamp01(getVal("nitrogen"));
+    payload.phosphorus = clamp01(getVal("phosphorus"));
+    payload.potassium = clamp01(getVal("potassium"));
+    
+    const btn = document.getElementById("analyzeBtn");
+    btn.disabled = true;
+    document.getElementById("summary").innerText = "Analyzing...";
+    document.getElementById("raw_json").innerText = "{ }";
+    
+    showLoading();
+    setTimeout(() => setLoading("Encoding sensor data into qubits...", 25), 150);
+    setTimeout(() => setLoading("Entangling qubits (feature correlation)...", 55), 500);
+    setTimeout(() => setLoading("Measuring quantum state & classifying...", 80), 850);
+    
+    try {
+      await new Promise(r => setTimeout(r, 900));
+      const res = await fetch(API + "/monitor", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      setLoading("Quantum report generated", 100);
+      
+      const soilNorm = data.inputs_normalized_0_to_1.soil_moisture;
+      document.getElementById("moisture").innerText = Number(soilNorm).toFixed(2);
+      document.getElementById("moisture-fill").style.width = (soilNorm * 100) + "%";
+      
+      document.getElementById("pump").innerText = data.water_pump;
+      document.getElementById("pump-indicator").style.background =
+        data.water_pump === "ON" ? "#43a047" : "#e53935";
+        
+      const pill = document.getElementById("plant_status");
+      pill.innerText = data.plant_status;
+      pill.className = "status-pill " + statusClass(data.plant_status);
+      
+      const nr = data.nutrient_report || {};
+      document.getElementById("n_status").innerHTML = badgeHTML("N", nr.nitrogen?.status);
+      document.getElementById("p_status").innerHTML = badgeHTML("P", nr.phosphorus?.status);
+      document.getElementById("k_status").innerHTML = badgeHTML("K", nr.potassium?.status);
+      document.getElementById("summary").innerText = data.summary || "--";
+      
+      setList("irrigation_list", data.irrigation_advice);
+      setList("fertilizer_list", data.fertilizer_advice);
+      
+      document.getElementById("raw_json").innerText = JSON.stringify(data, null, 2);
+      setTimeout(() => hideLoading(), 600);
+    } catch (err) {
+      hideLoading();
+      document.getElementById("summary").innerText =
+        "ERROR: Backend not running / not reachable.";
+      document.getElementById("raw_json").innerText = String(err);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  (function init() {
+    ["soil_moisture","temperature","humidity","light","nitrogen","phosphorus","potassium"]
+      .forEach(f => {
+        const rawEl = document.getElementById(f + "_raw");
+        const normEl = document.getElementById(f);
+        normEl.value = normFromRaw(f, parseFloat(rawEl.value)).toFixed(2);
+      });
+    analyze();
+  })();
+</script>
+</body>
+</html>
